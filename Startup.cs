@@ -1,4 +1,5 @@
 using BikesKart.DbContexts;
+using BikesKart.Helpers;
 using BikesKart.Repositories;
 using BikesKart.Services;
 using Microsoft.AspNetCore.Builder;
@@ -38,6 +39,7 @@ namespace BikesKart
             services.AddScoped<BrandsRepository, BrandsRepository>();
             services.AddScoped<CategoriesRepository, CategoriesRepository>();
             services.AddScoped<ProductsService, ProductsService>();
+            services.AddScoped<IUserService, UsersService>();
 
 
             services.AddControllers(o => o.EnableEndpointRouting = false).AddNewtonsoftJson(options =>
@@ -47,6 +49,15 @@ namespace BikesKart
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BikesKart", Version = "v1" });
             });
+
+            //services cors
+            services.AddCors(p => p.AddPolicy(name: "corsapp",
+                builder =>
+            {
+                builder.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader();
+            }));
+
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,8 +73,12 @@ namespace BikesKart
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            //app cors
+            app.UseCors("corsapp");
 
             app.UseAuthorization();
+
+            app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
